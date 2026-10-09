@@ -1,30 +1,33 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Nhận Key</title>
+<title>Nhận Key — cuttay999</title>
 <style>
   *{box-sizing:border-box}
   body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0d1117;color:#c9d1d9;font-family:Consolas,monospace;padding:20px}
-  .box{width:100%;max-width:440px;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px 24px;text-align:center}
-  h1{margin:0 0 8px;font-size:18px;color:#58a6ff;letter-spacing:1px}
-  .sub{font-size:12px;color:#6e7681;margin-bottom:24px}
-  button{width:100%;padding:14px;background:#1f6feb;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:14px;font-weight:bold;letter-spacing:1px;cursor:pointer;margin-bottom:8px}
+  .box{width:100%;max-width:440px;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:32px 24px;text-align:center}
+  .logo{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#58a6ff,#1f6feb);margin:0 auto 18px;box-shadow:0 0 24px rgba(88,166,255,.4)}
+  h1{margin:0 0 6px;font-size:17px;color:#58a6ff;letter-spacing:1.5px}
+  .sub{font-size:12px;color:#6e7681;margin-bottom:26px;line-height:1.6}
+  button{width:100%;padding:14px;background:#1f6feb;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:14px;font-weight:bold;letter-spacing:1.5px;cursor:pointer}
   button:hover{background:#388bfd}
   button:disabled{opacity:.5;cursor:default}
-  .copy{background:#238636}
-  .copy:hover{background:#2ea043}
-  .msg{margin-top:16px;padding:12px;border-radius:6px;font-size:12px;min-height:24px;background:#0d1117;border:1px dashed #30363d;line-height:1.5;word-break:break-all;white-space:pre-wrap}
+  .msg{margin-top:18px;padding:12px;border-radius:6px;font-size:12px;min-height:22px;background:#0d1117;border:1px dashed #30363d;line-height:1.5;white-space:pre-wrap}
   .err{color:#f85149;border-color:#6e1a1a}
   .ok{color:#3fb950;border-color:#1a4d2e}
-  .key{background:#0d1117;border:1px solid #1f6feb;border-radius:8px;padding:14px;font-size:13px;color:#58a6ff;word-break:break-all;letter-spacing:1px;margin:10px 0;user-select:all}
+  .note{margin-top:18px;font-size:10px;color:#6e7681;line-height:1.6}
 </style></head>
 <body><div class="box">
+  <div class="logo"></div>
   <h1>NHẬN LICENSE KEY</h1>
-  <div class="sub">1 máy = 1 key · hạn 2 ngày</div>
-  <button id="btn">BẮT ĐẦU</button>
+  <div class="sub">1 máy = 1 key · hạn 2 ngày<br>cần vượt 1 bước xác minh</div>
+  <button id="btn">NHẬN KEY</button>
   <div class="msg" id="msg">bấm nút để bắt đầu</div>
+  <div class="note">key sẽ gắn với máy này — không share được</div>
 </div>
 <script>
-const APPS_SCRIPT = '__APPS_SCRIPT_URL__';
+const APPS_SCRIPT  = 'https://script.google.com/macros/s/AKfycbxGCxrkmnZeq0br4X8Xt_g4IS-jGLzQ0E-wK4ViH2A8CyMlD7cJvv1lcMobm7gFJQFu/exec';
+const SHORTLINK_URL = '__SHORTLINK_URL__';
+
 const btn = document.getElementById('btn');
 const msg = document.getElementById('msg');
 
@@ -65,90 +68,21 @@ async function getHWID() {
   return 'h_' + hex.slice(0, 40);
 }
 
-async function callApi(payload) {
-  const r = await fetch(APPS_SCRIPT, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    redirect: 'follow'
-  });
-  return r.json();
-}
+btn.onclick = async () => {
+  btn.disabled = true;
+  msg.className = 'msg';
+  msg.textContent = 'đang chuẩn bị...';
 
-// detect step: có ?t=xxx → hiện key
-const params = new URLSearchParams(location.search);
-const tokenParam = params.get('t');
-
-if (tokenParam) {
-  (async () => {
-    msg.textContent = 'đang tải key...';
-    try {
-      const hwid = await getHWID();
-      const data = await callApi({ action: 'getkey', token: tokenParam, hwid });
-      if (!data.ok) {
-        msg.className = 'msg err';
-        msg.textContent = '❌ ' + (data.error || 'unknown');
-        return;
-      }
-      msg.className = 'msg ok';
-      msg.textContent = '✓ KEY CỦA BẠN';
-      const keyDiv = document.createElement('div');
-      keyDiv.className = 'key';
-      keyDiv.textContent = data.key;
-      msg.appendChild(keyDiv);
-      const expDiv = document.createElement('div');
-      expDiv.style.cssText = 'font-size:11px;color:#fbbf24;margin-bottom:12px;';
-      expDiv.textContent = 'hết hạn: ' + data.expiry;
-      msg.appendChild(expDiv);
-      const cpy = document.createElement('button');
-      cpy.className = 'copy';
-      cpy.textContent = '📋 COPY KEY';
-      cpy.onclick = () => {
-        navigator.clipboard.writeText(data.key);
-        cpy.textContent = '✓ ĐÃ COPY';
-      };
-      msg.appendChild(cpy);
-      btn.style.display = 'none';
-    } catch (e) {
-      msg.className = 'msg err';
-      msg.textContent = '❌ lỗi: ' + e.message;
-    }
-  })();
-} else {
-  btn.onclick = async () => {
-    btn.disabled = true;
-    msg.className = 'msg';
-    msg.textContent = 'đang xử lý...';
-    try {
-      const hwid = await getHWID();
-      const data = await callApi({ action: 'request', hwid: hwid });
-      if (!data.ok) {
-        msg.className = 'msg err';
-        msg.textContent = '❌ ' + (data.error || 'unknown');
-        btn.disabled = false;
-        return;
-      }
-      if (data.already) {
-        msg.className = 'msg ok';
-        msg.textContent = '✓ Key của bạn';
-        const keyDiv = document.createElement('div');
-        keyDiv.className = 'key';
-        keyDiv.textContent = data.key;
-        msg.appendChild(keyDiv);
-        const expDiv = document.createElement('div');
-        expDiv.style.cssText = 'font-size:11px;color:#fbbf24;';
-        expDiv.textContent = 'hết hạn: ' + data.expiry;
-        msg.appendChild(expDiv);
-        return;
-      }
-      msg.textContent = 'đang chuyển hướng...';
-      location.href = data.redirect;
-    } catch (e) {
-      msg.className = 'msg err';
-      msg.textContent = '❌ lỗi kết nối: ' + e.message;
-      btn.disabled = false;
-    }
-  };
-}
+  try {
+    const hwid = await getHWID();
+    localStorage.setItem('dc_hwid', hwid);
+    msg.textContent = 'đang chuyển tới bước xác minh...';
+    setTimeout(() => { location.href = SHORTLINK_URL; }, 500);
+  } catch (e) {
+    msg.className = 'msg err';
+    msg.textContent = '❌ lỗi: ' + e.message;
+    btn.disabled = false;
+  }
+};
 </script>
 </body></html>
