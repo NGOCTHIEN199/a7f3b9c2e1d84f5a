@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Nhận Key — cuttay999</title>
+<title>Nhận Key — DuckCoin</title>
 <style>
   *{box-sizing:border-box}
   body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0d1117;color:#c9d1d9;font-family:Consolas,monospace;padding:20px}
@@ -25,8 +25,8 @@
   <div class="note">key sẽ gắn với máy này — không share được</div>
 </div>
 <script>
-const APPS_SCRIPT  = 'https://script.google.com/macros/s/AKfycbxGCxrkmnZeq0br4X8Xt_g4IS-jGLzQ0E-wK4ViH2A8CyMlD7cJvv1lcMobm7gFJQFu/exec';
-const SHORTLINK_URL = 'https://link4m.org/tj7HN8';
+const APPS_SCRIPT   = 'https://script.google.com/macros/s/AKfycbxGCxrkmnZeq0br4X8Xt_g4IS-jGLzQ0E-wK4ViH2A8CyMlD7cJvv1lcMobm7gFJQFu/exec';
+const SHORTLINK_URL = 'https://link4m.net/tj7HN8';
 
 const btn = document.getElementById('btn');
 const msg = document.getElementById('msg');
@@ -76,6 +76,7 @@ btn.onclick = async () => {
   try {
     const hwid = await getHWID();
     localStorage.setItem('dc_hwid', hwid);
+    localStorage.setItem('dc_pending_at', String(Date.now()));
     msg.textContent = 'đang chuyển tới bước xác minh...';
     setTimeout(() => { location.href = SHORTLINK_URL; }, 500);
   } catch (e) {
