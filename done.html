@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Key của bạn — DuckCoin</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0d1117;color:#c9d1d9;font-family:Consolas,monospace;padding:20px}
+  .box{width:100%;max-width:460px;background:#161b22;border:1px solid #30363d;border-radius:12px;padding:32px 24px;text-align:center}
+  .logo{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#3fb950,#238636);margin:0 auto 18px;box-shadow:0 0 24px rgba(63,185,80,.4)}
+  h1{margin:0 0 6px;font-size:17px;color:#3fb950;letter-spacing:1.5px}
+  .sub{font-size:12px;color:#6e7681;margin-bottom:24px}
+  .key{background:#0d1117;border:1px solid #1f6feb;border-radius:8px;padding:16px;font-size:13px;color:#58a6ff;word-break:break-all;letter-spacing:1px;margin:12px 0;user-select:all}
+  .exp{font-size:11px;color:#fbbf24;margin-bottom:18px}
+  button{width:100%;padding:14px;background:#238636;color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:bold;letter-spacing:1px;cursor:pointer;margin-bottom:8px}
+  button:hover{background:#2ea043}
+  .btn2{background:#1f6feb}
+  .btn2:hover{background:#388bfd}
+  .msg{padding:12px;border-radius:6px;font-size:12px;min-height:22px;background:#0d1117;border:1px dashed #30363d;line-height:1.5}
+  .err{color:#f85149;border-color:#6e1a1a}
+  .ok{color:#3fb950;border-color:#1a4d2e}
+  .note{margin-top:18px;font-size:10px;color:#6e7681;line-height:1.6}
+</style></head>
+<body><div class="box">
+  <div class="logo"></div>
+  <h1>✓ VƯỢT LINK THÀNH CÔNG</h1>
+  <div class="sub">key của bạn đã sẵn sàng</div>
+  <div id="content">
+    <div class="msg" id="msg">đang tạo key...</div>
+  </div>
+  <div class="note">mở extension → dán key vào ô LICENSE KEY → KÍCH HOẠT<br>key gắn với máy này — không share được máy khác</div>
+</div>
+<script>
+const APPS_SCRIPT = '__APPS_SCRIPT_URL__';
+const msg = document.getElementById('msg');
+const content = document.getElementById('content');
+
+async function getHWID() {
+  const parts = [];
+  parts.push(navigator.userAgent || '');
+  parts.push(navigator.platform || '');
+  parts.push(navigator.language || '');
+  parts.push(screen.width + 'x' + screen.height + 'x' + screen.colorDepth);
+  parts.push(Intl.DateTimeFormat().resolvedOptions().timeZone || '');
+  parts.push(String(new Date().getTimezoneOffset()));
+  parts.push(String(navigator.hardwareConcurrency || 0));
+  parts.push(String(navigator.deviceMemory || 0));
+  try {
+    const c = document.createElement('canvas'); c.width = 200; c.height = 40;
+    const ctx = c.getContext('2d');
+    ctx.textBaseline = 'top'; ctx.font = '14px Arial';
+    ctx.fillStyle = '#f60'; ctx.fillRect(0, 0, 100, 20);
+    ctx.fillStyle = '#069'; ctx.fillText('DC-License-FP-2024', 2, 8);
+    ctx.fillStyle = 'rgba(102,204,0,0.7)'; ctx.fillText('DC-License-FP-2024', 4, 10);
+    parts.push(c.toDataURL());
+  } catch(e) {}
+  try {
+    const c2 = document.createElement('canvas');
+    const gl = c2.getContext('webgl') || c2.getContext('experimental-webgl');
+    if (gl) {
+      const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+      if (dbg) {
+        parts.push(String(gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) || ''));
+        parts.push(String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || ''));
+      }
+    }
+  } catch(e) {}
+  const raw = parts.join('|');
+  const buf = new TextEncoder().encode(raw);
+  const hb = await crypto.subtle.digest('SHA-256', buf);
+  const hex = Array.from(new Uint8Array(hb)).map(b => b.toString(16).padStart(2,'0')).join('');
+  return 'h_' + hex.slice(0, 40);
+}
+
+async function callApi(payload) {
+  const r = await fetch(APPS_SCRIPT, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    redirect: 'follow'
+  });
+  return r.json();
+}
+
+(async () => {
+  try {
+    // ưu tiên HWID đã lưu khi bấm nút trên index.html
+    let hwid = localStorage.getItem('dc_hwid');
+    if (!hwid) hwid = await getHWID();  // fallback: tự sinh lại
+
+    const data = await callApi({ action: 'request', hwid: hwid });
+
+    if (!data.ok) {
+      msg.className = 'msg err';
+      const map = {
+        'pool-empty':    '❌ Đã hết key — liên hệ admin',
+        'empty-hwid':    '❌ Không lấy được HWID máy bạn',
+        'server-error':  '❌ Lỗi server — thử lại sau'
+      };
+      msg.textContent = map[data.error] || ('❌ ' + (data.error || 'unknown'));
+      return;
+    }
+
+    // hiện key
+    content.innerHTML = '';
+    const ok = document.createElement('div');
+    ok.className = 'msg ok';
+    ok.textContent = data.already ? '✓ Bạn đã có key trước đó' : '✓ Key mới đã tạo';
+    content.appendChild(ok);
+
+    const keyDiv = document.createElement('div');
+    keyDiv.className = 'key';
+    keyDiv.textContent = data.key;
+    content.appendChild(keyDiv);
+
+    const expDiv = document.createElement('div');
+    expDiv.className = 'exp';
+    expDiv.textContent = 'hết hạn: ' + data.expiry;
+    content.appendChild(expDiv);
+
+    const cpy = document.createElement('button');
+    cpy.className = 'btn2';
+    cpy.textContent = '📋 COPY KEY';
+    cpy.onclick = () => {
+      navigator.clipboard.writeText(data.key);
+      cpy.textContent = '✓ ĐÃ COPY';
+    };
+    content.appendChild(cpy);
+
+    // xoá pending để lần sau bấm nút sẽ tạo lại flow
+    localStorage.removeItem('dc_hwid');
+
+  } catch (e) {
+    msg.className = 'msg err';
+    msg.textContent = '❌ lỗi: ' + e.message;
+  }
+})();
+</script>
+</body></html>
